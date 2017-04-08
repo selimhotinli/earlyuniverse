@@ -715,7 +715,7 @@ program evolve_trapped
 						- (k/scale_factor/hubble)**2*ycomplex(3:3) &
                         + (2.0e0_dp - eps)*ycomplex(3:3) - &
                            d2potdphi2(phi(1))*ycomplex(3:3)/hubble**2 &
-						+ (g2*(phi-phi_trap)/hubble**2)*sint
+						- (g2*(phi-phi_trap)/hubble**2)*sint
 
 
       yprime_complex(5:5) = ycomplex(6:6)
