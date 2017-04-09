@@ -2,8 +2,16 @@
 !
 ! Follows notably code from JB.
 !
-! Note: will debug/clean/note and explain tomorrow - also will prepare few questions following up 
-!       on the various erroneously applications I couldn't avoid below.
+! Note: Step towards evolving modes in a realisation with particle creation. Solves the homogeneous background 
+! equations until the end of inflation. Then finds how far back in e-folds BD is satisfied for a given realisation
+! with k_pivot at horizon crossing, solves the mode equations for the matter (source) field and inflaton field and 
+! evolves through the 'trap' until the horizon crossing. Solves and writes real and imaginary
+! parts of \chi and inflaton fields as well as their derivative etc. around the trap as well as the background 
+! values for all k values from k_piv = 1e-4 to 1e6.
+!
+! TODO: Will correctly renormalize the source term (its simply wrong&infinite at the moment), also think about how to
+! do the integral correctly, now it's just a summation of k amplitudes and phase space angle between the fields
+! in fourier space. 
 !
 ! - Selim
 !
@@ -78,6 +86,7 @@ program evolve_trapped
   open(unit=98,file='inflaton_mode_traj_long_new2.out')
   open(unit=99,file='source_traj_long_new2.out')
 
+! k values in logspace from 1e-4 to 1e6
   kvector = (/1.00000000e-04,   1.08005237e-04,   1.16651313e-04,&
 			 1.25989528e-04,   1.36075289e-04,   1.46968439e-04,&
 			 1.58733611e-04,   1.71440614e-04,   1.85164842e-04,&
@@ -178,7 +187,7 @@ program evolve_trapped
 			 5.40059328e+05,   5.83292359e+05,   6.29986298e+05,&
 			 6.80418197e+05,   7.34887289e+05,   7.93716762e+05,&
 			 8.57255673e+05,   9.25881025e+05,   1.00000000e+06/)
-
+! appropriate bin widths for k integral
   kbinwidths = (/7.70286e-6, 8.31949e-6, 8.98548e-6, 9.70479e-6, &
                0.0000104817, 0.0000113208, 0.000012227, 0.0000132058, 0.000014263, &
                0.0000154048, 0.000016638, 0.0000179699, 0.0000194084, 0.0000209621, &
@@ -228,7 +237,7 @@ program evolve_trapped
                19259.5, 20801.2, 22466.4, 24264.9, 26207.4, 28305.4, 30571.3, &
                33018.6, 35661.8, 38516.6, 41599.9, 44930.1, 48526.9, 52411.6, &
                56607.2, 61138.8, 66033.1, 71319.2, 77028.5/)
-
+! angle between inflaton choice k=(0,0,k_z) and internal k' integral for the source.
   piarray = (/ 0.        ,  0.05279988,  0.10559975,  0.15839963,  0.21119951, &
               0.26399938,  0.31679926,  0.36959914,  0.42239901,  0.47519889, &
               0.52799877,  0.58079864,  0.63359852,  0.68639839,  0.73919827, &
@@ -262,6 +271,7 @@ program evolve_trapped
   ! IC for the background and background dynamic evolution
   call initialize_background(y)
 
+  ! Solving the background equations and recording the values related to the bg
   do while (.not. bg_finish .and. i .lt. maxstep_bg)
     do ii=1, stepsize
       call gl10_bg( y, Nstep_bg)
@@ -305,7 +315,8 @@ program evolve_trapped
 
   end do
 
-
+  ! initializing the mode values (finds BD and sets the initial scale factor and efold
+  !                               for mode evaluation)
   call initialize_background_modes(y,N_start)
 
   print*, "k_ic = ", k_ic
@@ -318,7 +329,7 @@ program evolve_trapped
       k = kvector(ll) * kfactor
 
       if (real(y(1,ll)) .lt. phi_trap) then
-        ! print*,real(y(1,ll))
+        ! this takes all the time. will figure out how it is done correctly. 
         call calculate_source(y,sint)
       else
         sint = 0.0e0_dp
@@ -496,8 +507,6 @@ program evolve_trapped
                     phi_pivot, lnaH_pivot,polerr)
 
         push_horizon = exp(lnaH_pivot) / exp(lnaH)
-
-        ! print*,"lnaH_array=",lnaH_array(1:kout,1)
 
         do  while (.not. bd_satisfied)
 
